@@ -41,7 +41,7 @@
       kubernetes.core.k8s_info:
         api_version: kubevirt.io/v1
         kind: VirtualMachine
-        name: "{{ name }}"
+        name: "ocp-virt"
         namespace: "ocp-virt"
       register: deploy_collection_vm
       retries: 60
@@ -53,7 +53,7 @@
       kubernetes.core.k8s_info:
         api_version: kubevirt.io/v1
         kind: VirtualMachineInstance
-        name: "{{ name }}"
+        name: "ocp-virt"
         namespace: "ocp-virt"
       register: deploy_collection_vmi
       retries: 60
