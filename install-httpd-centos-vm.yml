@@ -29,7 +29,7 @@
           kind: Secret
           type: Generic
           metadata:
-            name: "{{ cloud_init_secret }}"
+            name: cloud-init
             namespace: "ocp-virt"
           data:
             userdata: "{{ deploy_collection_cloud_init_content | b64encode }}"
