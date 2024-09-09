@@ -1,5 +1,3 @@
-// install-httpd-centos-vm.yml
----
 - name: "install centos vm with httpd configured"
   hosts: all
   vars_files:
