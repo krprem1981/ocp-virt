@@ -3,7 +3,7 @@
   vars_files:
     - vars.yml
   tasks:
-    - name: "Create Namespace {{ namespace }}"
+    - name: "Create Namespace op-virt"
       kubernetes.core.k8s:
         state: present
         template: namespace.yml.j2
@@ -30,7 +30,7 @@
           type: Generic
           metadata:
             name: "{{ cloud_init_secret }}"
-            namespace: "{{ namespace }}"
+            namespace: "ocp-virt"
           data:
             userdata: "{{ deploy_collection_cloud_init_content | b64encode }}"
     - name: "Create VirtualMachine"
@@ -42,7 +42,7 @@
         api_version: kubevirt.io/v1
         kind: VirtualMachine
         name: "{{ name }}"
-        namespace: "{{ namespace }}"
+        namespace: "ocp-virt"
       register: deploy_collection_vm
       retries: 60
       delay: 10
@@ -54,7 +54,7 @@
         api_version: kubevirt.io/v1
         kind: VirtualMachineInstance
         name: "{{ name }}"
-        namespace: "{{ namespace }}"
+        namespace: "ocp-virt"
       register: deploy_collection_vmi
       retries: 60
       delay: 10
