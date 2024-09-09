@@ -1,12 +1,12 @@
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
-  name: {{ name }}
+  name: ocp-virt
   namespace: ocp-virt
 spec:
   to:
     kind: Service
-    name: {{ name }}
+    name: ocp-virt
     weight: 100
   port:
     targetPort: 80
