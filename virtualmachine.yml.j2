@@ -57,6 +57,8 @@ spec:
       volumes:
       - persistentVolumeClaim:
           claimName: ubuntu-xenial
+		containerDisk:
+          image: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
         name: rootdisk
       - cloudInitNoCloud:
           userData: |-
