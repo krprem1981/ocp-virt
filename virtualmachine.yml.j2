@@ -56,7 +56,7 @@ spec:
       terminationGracePeriodSeconds: 180
       volumes:
         - containerDisk:
-            image: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+            image: quay.io/containerdisks/fedora:latest
           name: rootdisk
         - cloudInitNoCloud:
             userData: |-
