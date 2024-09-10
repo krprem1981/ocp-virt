@@ -1,0 +1,66 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    app: ubuntu
+  name: app-vm01
+  namespace: ocp-virt
+spec:
+  running: true
+  template:
+    metadata:
+      annotations:
+        vm.kubevirt.io/flavor: small
+        vm.kubevirt.io/os: ubuntu
+        vm.kubevirt.io/workload: server
+      creationTimestamp: null
+      labels:
+        kubevirt.io/domain: ubuntu-vm
+        kubevirt.io/size: small
+    spec:
+      domain:
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: rootdisk
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - masquerade: {}
+            model: virtio
+            name: default
+          networkInterfaceMultiqueue: true
+          rng: {}
+        features:
+          acpi: {}
+          smm:
+            enabled: true
+        firmware:
+          bootloader:
+            bios: {}
+        machine:
+          type: pc-q35-rhel8.6.0
+        resources:
+          requests:
+            memory: 2Gi
+      hostname: app-vm01
+      networks:
+      - name: default
+        pod: {}
+      terminationGracePeriodSeconds: 180
+      volumes:
+      - persistentVolumeClaim:
+          claimName: ubuntu-xenial
+        name: rootdisk
+      - cloudInitNoCloud:
+          userData: |-
+            #cloud-config
+            password: 'ubuntu'
+            chpasswd: { expire: False }
+        name: cloudinitdisk
