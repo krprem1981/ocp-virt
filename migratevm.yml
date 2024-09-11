@@ -1,0 +1,104 @@
+- name: Migrate VMware VM to OpenShift Virtualization using MTV
+  hosts: localhost
+  gather_facts: no
+  vars:
+    mtv_namespace: "mtv-namespace"  # MTV project namespace in OpenShift
+    migration_plan_name: "vmware-to-openshift-migration"
+    provider_name: "vmware-provider"
+    provider_type: "vsphere"
+    target_namespace: "openshift-virtualization"
+    vmware_user: "your_vmware_username"
+    vmware_password: "your_vmware_password"
+    vmware_host: "vcenter.example.com"
+    vmware_vm_name: "vm_to_migrate"
+  tasks:
+    - name: Create a migration provider for VMware in MTV
+      k8s:
+        api_version: forklift.konveyor.io/v1beta1
+        kind: Provider
+        metadata:
+          name: "{{ provider_name }}"
+          namespace: "{{ mtv_namespace }}"
+        spec:
+          type: "{{ provider_type }}"
+          url: "https://{{ vmware_host }}"
+          secret:
+            namespace: "{{ mtv_namespace }}"
+            name: "{{ provider_name }}-credentials"
+      register: vmware_provider
+ 
+    - name: Create a secret for VMware provider credentials
+      k8s:
+        api_version: v1
+        kind: Secret
+        metadata:
+          name: "{{ provider_name }}-credentials"
+          namespace: "{{ mtv_namespace }}"
+        type: Opaque
+        data:
+          user: "{{ vmware_user | b64encode }}"
+          password: "{{ vmware_password | b64encode }}"
+ 
+    - name: Wait for the VMware provider to become ready
+      k8s_info:
+        api_version: forklift.konveyor.io/v1beta1
+        kind: Provider
+        name: "{{ provider_name }}"
+        namespace: "{{ mtv_namespace }}"
+      retries: 10
+      delay: 30
+      until: "{{ vmware_provider.status.conditions | selectattr('type', 'equalto', 'Ready') | first | attr('status') == 'True' }}"
+    - name: Create a migration plan in MTV
+      k8s:
+        api_version: forklift.konveyor.io/v1beta1
+        kind: Plan
+        metadata:
+          name: "{{ migration_plan_name }}"
+          namespace: "{{ mtv_namespace }}"
+        spec:
+          targetNamespace: "{{ target_namespace }}"
+          provider:
+            source:
+              name: "{{ provider_name }}"
+              namespace: "{{ mtv_namespace }}"
+            destination:
+              name: "openshift"
+              namespace: "{{ mtv_namespace }}"
+          vms:
+            - name: "{{ vmware_vm_name }}"
+    - name: Start the migration plan
+      k8s:
+        api_version: forklift.konveyor.io/v1beta1
+        kind: Migration
+        metadata:
+          generateName: "{{ migration_plan_name }}-"
+          namespace: "{{ mtv_namespace }}"
+        spec:
+          plan:
+            name: "{{ migration_plan_name }}"
+            namespace: "{{ mtv_namespace }}"
+ 
+    - name: Monitor the migration process
+      k8s_info:
+        api_version: forklift.konveyor.io/v1beta1
+        kind: Migration
+        namespace: "{{ mtv_namespace }}"
+      retries: 10
+      delay: 60
+      until: "{{ migration.status.conditions | selectattr('type', 'equalto', 'Succeeded') | first | attr('status') == 'True' }}"
+    - name: Ensure the VM is running in OpenShift Virtualization
+      k8s_info:
+        api_version: kubevirt.io/v1
+        kind: VirtualMachine
+        name: "{{ vmware_vm_name }}"
+        namespace: "{{ target_namespace }}"
+      register: migrated_vm
+ 
+    - name: Start the VM in OpenShift if not running
+      k8s:
+        api_version: kubevirt.io/v1
+        kind: VirtualMachine
+        name: "{{ vmware_vm_name }}"
+        namespace: "{{ target_namespace }}"
+        state: started
+      when: not migrated_vm.resources[0].status.ready
