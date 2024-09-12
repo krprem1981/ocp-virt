@@ -1,66 +1,74 @@
 ---
-- name: Migrate VMware VM to OpenShift Virtualization using MTV
+- name: Migrate VM from VMware to OpenShift Virtualization using MTV
   hosts: localhost
   gather_facts: no
   vars:
-    mtv_namespace: "vm-migration"  # MTV project namespace in OpenShift
-    migration_plan_name: "vmware-to-openshift-migration"
-    provider_name: "vmware"
-    provider_type: "vsphere"
-    target_namespace: "vm-migration"
-    vmware_vm_name: "application02"
-  tasks:  
-    - name: Create a migration plan in MTV
-      k8s:
-        api_version: forklift.konveyor.io/v1beta1
-        kind: Plan
+    mtv_namespace: "vm-migration"     # Namespace where MTV is installed
+    vm_name: "application01"                   # Name of the VM to migrate
+    migration_plan_name: "vmware-to-kubevirt-migration"  # Name of the migration plan
+    source_provider: "vmware" # Source VMware provider name in MTV
+    target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
+    vmware_datacenter: "Datacenter"   # VMware datacenter
+    vmware_cluster: "cluster1"         # VMware cluster where the VM resides
+    target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
+
+  tasks:
+
+    - name: Create migration plan for the VM from VMware to OpenShift Virtualization
+      shell: |
+        oc apply -f - <<EOF
+        apiVersion: v1beta1
+        kind: MigrationPlan
         metadata:
-          name: "{{ migration_plan_name }}"
-          namespace: "{{ mtv_namespace }}"
+          name: {{ migration_plan_name }}
+          namespace: {{ mtv_namespace }}
         spec:
-          targetNamespace: "{{ target_namespace }}"
-          provider:
-            source:
-              name: "{{ provider_name }}"
-              namespace: "{{ mtv_namespace }}"
-            destination:
-              name: "ocp-virt"
-              namespace: "{{ mtv_namespace }}"
+          targetProvider: {{ target_provider }}
+          sourceProvider: {{ source_provider }}
           vms:
-            - name: "{{ vmware_vm_name }}"
-    - name: Start the migration plan
-      k8s:
-        api_version: forklift.konveyor.io/v1beta1
-        kind: Migration
-        metadata:
-          generateName: "{{ migration_plan_name }}-"
-          namespace: "{{ mtv_namespace }}"
-        spec:
-          plan:
-            name: "{{ migration_plan_name }}"
-            namespace: "{{ mtv_namespace }}"
- 
-    - name: Monitor the migration process
-      k8s_info:
-        api_version: forklift.konveyor.io/v1beta1
-        kind: Migration
-        namespace: "{{ mtv_namespace }}"
-      retries: 10
+            - name: "{{ vm_name }}"
+              datacenter: "{{ vmware_datacenter }}"
+              cluster: "{{ vmware_cluster }}"
+          map:
+            namespace: "{{ target_namespace }}"
+        EOF
+      register: migration_plan_creation
+      ignore_errors: yes
+      tags:
+        - migration_plan
+
+    - name: Check if migration plan creation was successful
+      debug:
+        var: migration_plan_creation
+      tags:
+        - migration_plan
+
+    - name: Start migration plan
+      shell: |
+        oc patch migrationplan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "add", "path": "/spec/migrate", "value": true}]'
+      register: migration_plan_start
+      ignore_errors: yes
+      tags:
+        - start_migration
+
+    - name: Check if migration plan start was successful
+      debug:
+        var: migration_plan_start
+      tags:
+        - start_migration
+
+    - name: Monitor migration plan status
+      shell: |
+        oc get migrationplan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
+      register: migration_status
+      until: migration_status.stdout == "True"
+      retries: 30
       delay: 60
-      until: "{{ migration.status.conditions | selectattr('type', 'equalto', 'Succeeded') | first | attr('status') == 'True' }}"
-    - name: Ensure the VM is running in OpenShift Virtualization
-      k8s_info:
-        api_version: kubevirt.io/v1
-        kind: VirtualMachine
-        name: "{{ vmware_vm_name }}"
-        namespace: "{{ target_namespace }}"
-      register: migrated_vm
- 
-    - name: Start the VM in OpenShift if not running
-      k8s:
-        api_version: kubevirt.io/v1
-        kind: VirtualMachine
-        name: "{{ vmware_vm_name }}"
-        namespace: "{{ target_namespace }}"
-        state: started
-      when: not migrated_vm.resources[0].status.ready
+      tags:
+        - monitor_migration
+
+    - name: Verify migration status
+      debug:
+        var: migration_status
+      tags:
+        - monitor_migration
