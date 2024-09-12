@@ -17,7 +17,7 @@
   tasks:
     - name: Log in to OpenShift
       shell: >
-      oc login {{ ocp_cluster_url }} --token={{ openshift_token }}
+        oc login {{ ocp_cluster_url }} --token={{ openshift_token }}
 
     - name: Create migration plan for the VM from VMware to OpenShift Virtualization
       shell: |
