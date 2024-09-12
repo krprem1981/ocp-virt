@@ -4,7 +4,7 @@
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
     vm_name: "Application01"                   # Name of the VM to migrate
-    migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
+    migration_plan_name: "vmware-to-ocp-101"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
     vmware_datacenter: "Datacenter"   # VMware datacenter
@@ -62,7 +62,7 @@
 
     - name: Start migration plan
       shell: |
-        oc patch migrationplan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "add", "path": "/spec/migrate", "value": true}]'
+        oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "add", "path": "/spec/migrate", "value": true}]'
       register: migration_plan_start
       ignore_errors: yes
       tags:
@@ -76,7 +76,7 @@
 
     - name: Monitor migration plan status
       shell: |
-        oc get migrationplan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
+        oc get plan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
       register: migration_status
       until: migration_status.stdout == "True"
       retries: 30
