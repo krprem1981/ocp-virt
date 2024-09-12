@@ -4,7 +4,7 @@
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
     vm_name: "Application01"                   # Name of the VM to migrate
-    migration_plan_name: "vmware-to-kubevirt-migration"  # Name of the migration plan
+    migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
     vmware_datacenter: "Datacenter"   # VMware datacenter
