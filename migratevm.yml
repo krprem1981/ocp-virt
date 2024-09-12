@@ -11,8 +11,13 @@
     vmware_datacenter: "Datacenter"   # VMware datacenter
     vmware_cluster: "cluster1"         # VMware cluster where the VM resides
     target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
+    ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
+    openshift_token: "sha256~RIPYdqWKQ_0r06B_yKF3Abuidk7IcFAuh3r04oHweIk"
 
   tasks:
+    - name: Log in to OpenShift
+      shell: >
+      oc login {{ ocp_cluster_url }} --token={{ openshift_token }}
 
     - name: Create migration plan for the VM from VMware to OpenShift Virtualization
       shell: |
