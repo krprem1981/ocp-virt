@@ -5,11 +5,11 @@
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
     vm_name: "application01"                   # Name of the VM to migrate
-    migration_plan_name: "vmware-to-kubevirt-migration"  # Name of the migration plan
+    migration_plan_name: "migration-p001"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
     vmware_datacenter: "Datacenter"   # VMware datacenter
-    vmware_cluster: "cluster1"         # VMware cluster where the VM resides
+    vmware_cluster: "Cluster1"         # VMware cluster where the VM resides
     target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
     ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
     openshift_token: "sha256~RIPYdqWKQ_0r06B_yKF3Abuidk7IcFAuh3r04oHweIk"
