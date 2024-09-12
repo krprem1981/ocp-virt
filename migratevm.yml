@@ -12,8 +12,8 @@
     target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
     ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
     openshift_token: "sha256~RIPYdqWKQ_0r06B_yKF3Abuidk7IcFAuh3r04oHweIk"
-    networkmap-name: "networkmap-001"
-    storagemap-name: "storagemap-001"
+    networkmap_name: "networkmap-001"
+    storagemap_name: "storagemap-001"
     
 
   tasks:
@@ -32,10 +32,10 @@
         spec:
           map:
             network:
-              name: {{ networkmap-name }}
+              name: {{ networkmap_name }}
               namespace: {{ target_namespace }}
             storage:
-              name: {{ storagemap-name }}
+              name: {{ storagemap_name }}
               namespace: {{ target_namespace }}
           provider:
             destination:
