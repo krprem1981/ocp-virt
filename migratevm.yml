@@ -4,14 +4,14 @@
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
     vm_name: "Application01"                   # Name of the VM to migrate
-    migration_plan_name: "vmware-to-ocp-101"  # Name of the migration plan
+    migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
     vmware_datacenter: "Datacenter"   # VMware datacenter
     vmware_cluster: "Cluster1"         # VMware cluster where the VM resides
     target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
     ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
-    openshift_token: "sha256~4qqGHuZyYX88VAfiuZ1GZvwYtj9fpdfGdM1c4SxTP1E"
+    openshift_token: "sha256~raHGWRZtcR8WLWN68gILDwu8Cvgt8i5Kvh6y9GrS4RU"
     networkmap_name: "networkmap-001"
     storagemap_name: "storagemap-001"
     
@@ -62,7 +62,17 @@
 
     - name: Start migration plan
       shell: |
-        oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "add", "path": "/spec/migrate", "value": true}]'
+        oc apply -f - <<EOF
+        apiVersion: forklift.konveyor.io/v1beta1
+        kind: Migration
+        metadata:
+          name: {{ migration_plan_name }}
+          namespace: {{ target_namespace }}
+        spec:
+          plan:
+            name: {{ migration_plan_name }}
+            namespace: {{ target_namespace }}
+        EOF
       register: migration_plan_start
       ignore_errors: yes
       tags:
@@ -76,7 +86,7 @@
 
     - name: Monitor migration plan status
       shell: |
-        oc get plan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
+        oc get migration {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
       register: migration_status
       until: migration_status.stdout == "True"
       retries: 30
