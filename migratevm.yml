@@ -3,7 +3,7 @@
   gather_facts: no
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
-    vm_name: "" # Name of the VM to migrate
+    vm_name: "Application01"                   # Name of the VM to migrate
     migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
@@ -11,9 +11,11 @@
     vmware_cluster: "Cluster1"         # VMware cluster where the VM resides
     target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
     ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
-    openshift_token: "sha256~yJpkV7-sRRda2H3_QNsrar6_i120GyLft5LShL1BnoQ"
+    openshift_token: "sha256~9SYFz0-AkupaPqjXaIOnKydRSyKS7zkt4TLOlTtSkOY"
     networkmap_name: "networkmap-001"
     storagemap_name: "storagemap-001"
+    
+
   tasks:
     - name: Log in to OpenShift
       shell: >
@@ -43,10 +45,12 @@
               name: {{ source_provider }}
               namespace: {{ target_namespace }}
           targetNamespace: {{ target_namespace }}
-          vms: {{ vm_name }}
+          vms:
+            - name: {{ vm_name }}
+          warm: false
         EOF
       register: migration_plan_creation
-      ignore_errors: no
+      ignore_errors: yes
       tags:
         - migration_plan
 
