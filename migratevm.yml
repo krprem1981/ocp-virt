@@ -3,10 +3,7 @@
   gather_facts: no
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
-     vms_name: # Name of the VM to migrate
-       - vm1
-       - vm2
-       - vm3
+    vm_name: "{{ vms_to_migrate.splitlines() }}"
     migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
