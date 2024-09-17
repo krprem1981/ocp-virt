@@ -45,7 +45,7 @@
           targetNamespace: {{ target_namespace }}
           vms:
             - name: {{ item }}
-                loop: "{{ vms_name }}"
+      loop: "{{ vms_name }}"
           warm: false
         EOF
       
