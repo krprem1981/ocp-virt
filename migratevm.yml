@@ -18,7 +18,6 @@
     - name: Log in to OpenShift
       shell: >
         oc login --server={{ ocp_cluster_url }} --token={{ openshift_token }} --insecure-skip-tls-verify=true
-
     - name: Create migration plan for the VM from VMware to OpenShift Virtualization
       shell: |
         oc apply -f - <<EOF
