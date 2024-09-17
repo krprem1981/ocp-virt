@@ -11,7 +11,7 @@
     vmware_cluster: "Cluster1"         # VMware cluster where the VM resides
     target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
     ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
-    openshift_token: "sha256~9SYFz0-AkupaPqjXaIOnKydRSyKS7zkt4TLOlTtSkOY"
+    openshift_token: "sha256~yJpkV7-sRRda2H3_QNsrar6_i120GyLft5LShL1BnoQ"
     networkmap_name: "networkmap-001"
     storagemap_name: "storagemap-001"
   tasks:
