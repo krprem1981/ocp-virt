@@ -22,9 +22,8 @@
     - name: Create migration plan for the VM from VMware to OpenShift Virtualization
       shell: |
         oc apply -f - <<EOF
-        #apiVersion: forklift.konveyor.io/v1beta1
-        apiVersion: mtv.openshift.io/v1alpha1
-        kind: MigrationPlan
+        apiVersion: forklift.konveyor.io/v1beta1
+        kind: Plan
         metadata:
           name: {{ migration_plan_name }}
           namespace: {{ mtv_namespace }}
