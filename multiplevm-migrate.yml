@@ -1,0 +1,101 @@
+- name: Migrate VM from VMware to OpenShift Virtualization using MTV
+  hosts: localhost
+  gather_facts: no
+  vars:
+    mtv_namespace: "vm-migration"     # Namespace where MTV is installed
+    vm_name: "Application01"                   # Name of the VM to migrate
+    migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
+    source_provider: "vmware" # Source VMware provider name in MTV
+    target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
+    vmware_datacenter: "Datacenter"   # VMware datacenter
+    vmware_cluster: "Cluster1"         # VMware cluster where the VM resides
+    target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
+    ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
+    openshift_token: "sha256~9SYFz0-AkupaPqjXaIOnKydRSyKS7zkt4TLOlTtSkOY"
+    networkmap_name: "networkmap-001"
+    storagemap_name: "storagemap-001"
+    
+
+  tasks:
+    - name: Log in to OpenShift
+      shell: >
+        oc login --server={{ ocp_cluster_url }} --token={{ openshift_token }} --insecure-skip-tls-verify=true
+
+    - name: Create migration plan for the VM from VMware to OpenShift Virtualization
+      shell: |
+        oc apply -f - <<EOF
+        apiVersion: forklift.konveyor.io/v1beta1
+        kind: Plan
+        metadata:
+          name: {{ migration_plan_name }}
+          namespace: {{ mtv_namespace }}
+        spec:
+          map:
+            network:
+              name: {{ networkmap_name }}
+              namespace: {{ target_namespace }}
+            storage:
+              name: {{ storagemap_name }}
+              namespace: {{ target_namespace }}
+          provider:
+            destination:
+              name: {{ target_provider }}
+              namespace: {{ target_namespace }}
+            source:
+              name: {{ source_provider }}
+              namespace: {{ target_namespace }}
+          targetNamespace: {{ target_namespace }}
+          vms:
+            - name: {{ vm_name }}
+          warm: false
+        EOF
+      register: migration_plan_creation
+      ignore_errors: yes
+      tags:
+        - migration_plan
+
+    - name: Check if migration plan creation was successful
+      debug:
+        var: migration_plan_creation
+      tags:
+        - migration_plan
+
+    - name: Start migration plan
+      shell: |
+        oc apply -f - <<EOF
+        apiVersion: forklift.konveyor.io/v1beta1
+        kind: Migration
+        metadata:
+          name: {{ migration_plan_name }}
+          namespace: {{ target_namespace }}
+        spec:
+          plan:
+            name: {{ migration_plan_name }}
+            namespace: {{ target_namespace }}
+        EOF
+      register: migration_plan_start
+      ignore_errors: yes
+      tags:
+        - start_migration
+
+    - name: Check if migration plan start was successful
+      debug:
+        var: migration_plan_start
+      tags:
+        - start_migration
+
+    - name: Monitor migration plan status
+      shell: |
+        oc get migration {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
+      register: migration_status
+      until: migration_status.stdout == "True"
+      retries: 30
+      delay: 60
+      tags:
+        - monitor_migration
+
+    - name: Verify migration status
+      debug:
+        var: migration_status
+      tags:
+        - monitor_migration
