@@ -43,7 +43,7 @@
               namespace: {{ target_namespace }}
           targetNamespace: {{ target_namespace }}
           vms:
-            {% for vm in vm_name %}
+            {% for vm in vms_name %}
             - name: {{ vm }}
             {% endfor %}
           warm: false
