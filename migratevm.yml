@@ -49,7 +49,7 @@
         EOF
       loop: "{{ vms_name }}"
       register: migration_plan_creation
-      ignore_errors: yes
+      ignore_errors: no
       tags:
         - migration_plan
 
