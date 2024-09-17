@@ -44,11 +44,11 @@
               namespace: {{ target_namespace }}
           targetNamespace: {{ target_namespace }}
           vms:
-            - name: {{ item }}
-      
+            {% for vm in vm_name %}
+            - name: {{ vm }}
+            {% endfor %}
           warm: false
         EOF
-      loop: "{{ vms_name }}"
       register: migration_plan_creation
       ignore_errors: no
       tags:
