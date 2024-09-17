@@ -3,7 +3,7 @@
   gather_facts: no
   vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
-    vm_name: "Application01"                   # Name of the VM to migrate
+    #vm_name: "Application01"                   # Name of the VM to migrate
     migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
@@ -14,6 +14,10 @@
     openshift_token: "sha256~yJpkV7-sRRda2H3_QNsrar6_i120GyLft5LShL1BnoQ"
     networkmap_name: "networkmap-001"
     storagemap_name: "storagemap-001"
+  vars_prompt:
+    - name: vm_name
+      prompt: "Please enter vm to migrate"
+      private: no  # Set to yes if you want to hide the input (like a password)
     
 
   tasks:
