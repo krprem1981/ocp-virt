@@ -45,10 +45,10 @@
           targetNamespace: {{ target_namespace }}
           vms:
             - name: {{ item }}
-      loop: "{{ vms_name }}"
+      
           warm: false
         EOF
-      
+      loop: "{{ vms_name }}"
       register: migration_plan_creation
       ignore_errors: no
       tags:
