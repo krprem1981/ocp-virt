@@ -22,13 +22,6 @@
     - name: Authenticate with OpenShift (bypassing self-signed cert)
       shell: |
         oc login --server={{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
-      register: oc_login_output
-
-    - name: Verify OpenShift login
-      fail:
-        msg: "Login to OpenShift failed!"
-      when: "'Login successful' not in oc_login_output.stdout"
-
     - name: Create the migration plan for the VMs
       shell: |
         oc apply -f - <<EOF
