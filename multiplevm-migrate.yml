@@ -9,9 +9,9 @@
     migration_source_name: "vmware"
     target_namespace: "vm-migration"
     vms_to_migrate:  # List of VMs to migrate
-      - "Application01"
-      - "Application02"
-      - "cp-open5gs"
+      - "{{ vm_name }}"
+      - "{{ vm_name }}"
+      - "{{ vm_name }}"
     source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
     networkmap_name: "networkmap-001"
