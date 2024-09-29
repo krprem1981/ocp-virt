@@ -62,7 +62,21 @@
         var: apply_plan_output.stdout
     - name: Start the migration plan
       shell: |
-        oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "replace", "path": "/spec/targetState", "value": "Started"}]'
+          oc apply -f - <<EOF
+          apiVersion: forklift.konveyor.io/v1beta1
+          kind: Migration
+          metadata:
+            name: {{ migration_plan_name }}
+            namespace: {{ target_namespace }}
+          spec:
+            plan:
+              name: {{ migration_plan_name }}
+              namespace: {{ target_namespace }}
+          EOF
+      register: migration_plan_start
+      ignore_errors: yes
+      tags:
+        - start_migration
 
     - name: Monitor the migration progress
       shell: |
