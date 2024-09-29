@@ -2,7 +2,7 @@
   hosts: localhost
   gather_facts: no
   vars:
-    mtv_namespace: "vm-migration"     # Namespace where MTV is installed
+    project_name: "vm-migration"     # Namespace where MTV is installed
     vm_names:  # List of VMs to migrate
       - Application01
       - Application02
