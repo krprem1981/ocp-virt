@@ -1,73 +1,76 @@
-- name: Migrate multiple VMs from VMware to OpenShift Virtualization
+---
+- name: Migrate VMs from VMware to OpenShift Virtualization using MTV
   hosts: localhost
-  gather_facts: no
   vars:
-    # MTV API details (replace with your MTV instance information)
-    openshift_api_url: "https://api.ibmcoe.techmapps.local:6443"
-    openshift_token: "sha256~qdUBdeRmjZBDAixzxILHH-U8J3UJ945CKz75HCvnSf8"
-    project_name: "vm-migration"  # MTV project namespace
-    source_provider_name: "vmware"
-    target_provider_name: "ocp-virt"
-    migration_plan_name: "multi-vm-migration-plan-01"
-    vm_names:  # List of VMs to migrate
-      - Application01
-      - Application02
-      - cp-open5gs
+    ocp_url: "https://api.ibmcoe.techmapps.local:6443"
+    ocp_token: "sha256~qdUBdeRmjZBDAixzxILHH-U8J3UJ945CKz75HCvnSf8"
+    mtv_namespace: "vm-migration"
+    migration_plan_name: "vm-migration-plan-001"
+    migration_source_name: "vmware"
+    target_namespace: "vm-migration"
+    vms_to_migrate:  # List of VMs to migrate
+      - "Application01"
+      - "Application02"
+      - "cp-open5gs"
+	source_provider: "vmware" # Source VMware provider name in MTV
+    target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
+	networkmap_name: "networkmap-001"
+    storagemap_name: "storagemap-001"
+
   tasks:
-    - name: Create MTV Migration Plan
-      uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans --insecure-skip-tls-verify=true"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ openshift_token }}"
-          Content-Type: "application/json"
-        body_format: json
-        body:
-          apiVersion: "forklift.konveyor.io/v1beta1"
-          kind: "MigrationPlan"
-          metadata:
-            name: "{{ migration_plan_name }}"
-            namespace: "{{ project_name }}"
-          spec:
-            provider:
-              source: "{{ source_provider_name }}"
-              destination: "{{ target_provider_name }}"
-            targetNamespace: "{{ project_name }}"
-            vms:
-              - name: "{{ item }}"
-                sourceProvider: "{{ source_provider_name }}"
-            map:
-              network: networkmap-001  # Define any network mapping if needed
-              storage: storagemap-001  # Define any storage mapping if needed
-        status_code: 201
-      loop: "{{ vm_names }}"
-      register: migration_plan
 
-    - name: Check Migration Plan Creation Status
-      debug:
-        msg: "Migration Plan Creation Status: {{ migration_plan.json }}"
+    - name: Authenticate with OpenShift (bypassing self-signed cert)
+      shell: |
+        oc login {{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
+      register: oc_login_output
 
-    - name: Start Migration Plan Execution
-      uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }}/migrate --insecure-skip-tls-verify=true"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ openshift_token }}"
-          Content-Type: "application/json"
-        body_format: json
-        body: {}
-        status_code: 202
-      register: start_migration
+    - name: Verify OpenShift login
+      fail:
+        msg: "Login to OpenShift failed!"
+      when: "'Login successful' not in oc_login_output.stdout"
 
-    - name: Check Migration Execution Status
-      uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }} --insecure-skip-tls-verify=true"
-        method: GET
-        headers:
-          Authorization: "Bearer {{ openshift_token }}"
-        status_code: 200
+    - name: Create the migration plan for the VMs
+      shell: |
+        oc apply -f - <<EOF
+        apiVersion: forklift.konveyor.io/v1beta1
+        kind: Plan
+        metadata:
+          name: {{ migration_plan_name }}
+          namespace: {{ mtv_namespace }}
+        spec:
+          map:
+            network:
+              name: {{ networkmap_name }}
+              namespace: {{ target_namespace }}
+            storage:
+              name: {{ storagemap_name }}
+              namespace: {{ target_namespace }}
+          provider:
+            destination:
+              name: {{ target_provider }}
+              namespace: {{ target_namespace }}
+            source:
+              name: {{ source_provider }}
+              namespace: {{ target_namespace }}
+          targetNamespace: {{ target_namespace }}
+          vms:
+          {% for vm in vms_to_migrate %}
+            - name: {{ vm }}
+          {% endfor %}
+        EOF
+
+    - name: Start the migration plan
+      shell: |
+        oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "replace", "path": "/spec/targetState", "value": "Started"}]'
+
+    - name: Monitor the migration progress
+      shell: |
+        oc get plan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath="{.status.conditions[*].reason}"
+
+    - name: Confirm migration completion
+      shell: |
+        oc get plan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath="{.status.conditions[?(@.type=='Succeeded')].status}"
       register: migration_status
-
-    - name: Display Migration Plan Status
-      debug:
-        msg: "Migration Status: {{ migration_status.json.status }}"
+      until: migration_status.stdout == "True"
+      retries: 10
+      delay: 30
