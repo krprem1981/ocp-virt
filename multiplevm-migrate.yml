@@ -51,7 +51,6 @@
             - name: {{ vm }}
           {% endfor %}
         EOF
-
     - name: Start the migration plan
       shell: |
         oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "replace", "path": "/spec/targetState", "value": "Started"}]'
