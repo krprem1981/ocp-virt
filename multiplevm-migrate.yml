@@ -24,7 +24,7 @@
         oc login --server={{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
     - name: Create the migration plan for the VMs
       shell: >
-        cat <<EOF | oc apply -f -
+        oc apply -f - <<EOF
         apiVersion: forklift.konveyor.io/v1beta1
         kind: Plan
         metadata:
