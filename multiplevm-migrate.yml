@@ -2,33 +2,33 @@
   hosts: localhost
   gather_facts: no
   vars:
-    project_name: "vm-migration"     # Namespace where MTV is installed
-    vm_names:  # List of VMs to migrate
+    project_name: vm-migration
+    vm_names:
       - Application01
       - Application02
       - cp-open5gs
-    migration_plan_name: "vmware-to-ocp-100"  # Name of the migration plan
-    source_provider: "vmware" # Source VMware provider name in MTV
-    target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
-    vmware_datacenter: "Datacenter"   # VMware datacenter
-    vmware_cluster: "Cluster1"         # VMware cluster where the VM resides
-    target_namespace: "vm-migration"   # Namespace in OpenShift for the migrated VM
-    ocp_cluster_url: "https://api.ibmcoe.techmapps.local:6443"
-    openshift_token: "sha256~qdUBdeRmjZBDAixzxILHH-U8J3UJ945CKz75HCvnSf8"
-    networkmap_name: "networkmap-001"
-    storagemap_name: "storagemap-001"
+    migration_plan_name: vmware-to-ocp-100
+    source_provider_name: vmware
+    target_provider_name: ocp-virt
+    vmware_datacenter: Datacenter
+    vmware_cluster: Cluster1
+    target_namespace: vm-migration
+    openshift_api_url: https://api.ibmcoe.techmapps.local:6443
+    openshift_token: sha256~qdUBdeRmjZBDAixzxILHH-U8J3UJ945CKz75HCvnSf8
+    networkmap_name: networkmap-001
+    storagemap_name: storagemap-001
   tasks:
     - name: Create MTV Migration Plan
       uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans"
+        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{project_name }}/migrationplans"
         method: POST
         headers:
-          Authorization: "Bearer {{ openshift_token }}"
-          Content-Type: "application/json"
+          Authorization: Bearer {{ openshift_token }}
+          Content-Type: application/json
         body_format: json
         body:
-          apiVersion: "forklift.konveyor.io/v1beta1"
-          kind: "MigrationPlan"
+          apiVersion: forklift.konveyor.io/v1beta1
+          kind: MigrationPlan
           metadata:
             name: "{{ migration_plan_name }}"
             namespace: "{{ project_name }}"
@@ -41,37 +41,33 @@
               - name: "{{ item }}"
                 sourceProvider: "{{ source_provider_name }}"
             map:
-              network: "{{ networkmap_name }}"  # Define any network mapping if needed
-              storage: "{{ storagemap_name }}"  # Define any storage mapping if needed
+              network: "{{ networkmap_name }}"
+              storage: "{{ storagemap_name }}"
         status_code: 201
       loop: "{{ vm_names }}"
       register: migration_plan
-
     - name: Check Migration Plan Creation Status
       debug:
         msg: "Migration Plan Creation Status: {{ migration_plan.json }}"
-
     - name: Start Migration Plan Execution
       uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }}/migrate"
+        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{project_name }}/migrationplans/{{ migration_plan_name }}/migrate"
         method: POST
         headers:
-          Authorization: "Bearer {{ openshift_token }}"
-          Content-Type: "application/json"
+          Authorization: Bearer {{ openshift_token }}
+          Content-Type: application/json
         body_format: json
         body: {}
         status_code: 202
       register: start_migration
-
     - name: Check Migration Execution Status
       uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }}"
+        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{project_name }}/migrationplans/{{ migration_plan_name }}"
         method: GET
         headers:
-          Authorization: "Bearer {{ openshift_token }}"
+          Authorization: Bearer {{ openshift_token }}
         status_code: 200
       register: migration_status
-
     - name: Display Migration Plan Status
       debug:
         msg: "Migration Status: {{ migration_status.json.status }}"
