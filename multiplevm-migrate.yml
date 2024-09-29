@@ -21,7 +21,7 @@
 
     - name: Authenticate with OpenShift (bypassing self-signed cert)
       shell: |
-        oc login {{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
+        oc login --server={{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
       register: oc_login_output
 
     - name: Verify OpenShift login
