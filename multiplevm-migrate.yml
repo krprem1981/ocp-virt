@@ -1,11 +1,8 @@
----
 - name: Migrate multiple VMs from VMware to OpenShift Virtualization
   hosts: localhost
   gather_facts: no
   vars:
-     vars:
     mtv_namespace: "vm-migration"     # Namespace where MTV is installed
-    #vms_name: "{{ vms_to_migrate.splitlines() }}" # Name of the VM to migrate
     vm_names:  # List of VMs to migrate
       - Application01
       - Application02
