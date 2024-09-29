@@ -16,7 +16,7 @@
     openshift_api_url: https://api.ibmcoe.techmapps.local:6443
     openshift_token: sha256~qdUBdeRmjZBDAixzxILHH-U8J3UJ945CKz75HCvnSf8
     networkmap_name: networkmap-001
-    storagemap_name: storagemap-001
+    storagemap_name: storagemap-001  
   tasks:
     - name: Create MTV Migration Plan
       uri:
