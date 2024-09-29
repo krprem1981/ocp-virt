@@ -24,7 +24,7 @@
         oc login --server={{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
     - name: Create the migration plan for the VMs
       shell: |
-        oc apply -f - <<EOF
+        cat <<EOF | oc apply -f -
         apiVersion: forklift.konveyor.io/v1beta1
         kind: Plan
         metadata:
@@ -51,6 +51,10 @@
             - name: {{ vm }}
           {% endfor %}
         EOF
+      register: apply_plan_output
+    - name: Debug plan creation output
+      debug:
+        var: apply_plan_output.stdout
     - name: Start the migration plan
       shell: |
         oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "replace", "path": "/spec/targetState", "value": "Started"}]'
