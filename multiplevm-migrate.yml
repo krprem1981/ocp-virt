@@ -12,9 +12,9 @@
       - "Application01"
       - "Application02"
       - "cp-open5gs"
-	source_provider: "vmware" # Source VMware provider name in MTV
+    source_provider: "vmware" # Source VMware provider name in MTV
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
-	networkmap_name: "networkmap-001"
+    networkmap_name: "networkmap-001"
     storagemap_name: "storagemap-001"
 
   tasks:
