@@ -16,7 +16,7 @@
   tasks:
     - name: Create MTV Migration Plan
       uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans"
+        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans --insecure-skip-tls-verify=true"
         method: POST
         headers:
           Authorization: "Bearer {{ openshift_token }}"
@@ -49,7 +49,7 @@
 
     - name: Start Migration Plan Execution
       uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }}/migrate"
+        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }}/migrate --insecure-skip-tls-verify=true"
         method: POST
         headers:
           Authorization: "Bearer {{ openshift_token }}"
@@ -61,7 +61,7 @@
 
     - name: Check Migration Execution Status
       uri:
-        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }}"
+        url: "{{ openshift_api_url }}/apis/forklift.konveyor.io/v1beta1/namespaces/{{ project_name }}/migrationplans/{{ migration_plan_name }} --insecure-skip-tls-verify=true"
         method: GET
         headers:
           Authorization: "Bearer {{ openshift_token }}"
