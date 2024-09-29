@@ -22,35 +22,44 @@
     - name: Authenticate with OpenShift (bypassing self-signed cert)
       shell: |
         oc login --server={{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
-    - name: Create the migration plan for the VMs
+    - name: Create a migration plan YAML file
+      copy:
+        dest: "/tmp/{{ migration_plan_name }}.yaml"
+        content: |
+          apiVersion: forklift.konveyor.io/v1beta1
+          kind: Plan
+          metadata:
+            name: {{ migration_plan_name }}
+            namespace: {{ mtv_namespace }}
+          spec:
+            map:
+              network:
+                name: {{ networkmap_name }}
+                namespace: {{ mtv_namespace }}
+              storage:
+                name: {{ storagemap_name }}
+                namespace: {{ mtv_namespace }}
+            provider:
+              destination:
+                name: ocp-virt
+                namespace: {{ mtv_namespace }}
+              source:
+                name: {{ migration_source_name }}
+                namespace: {{ mtv_namespace }}
+            targetNamespace: {{ target_namespace }}
+            vms:
+            {% for vm in vms_to_migrate %}
+              - name: {{ vm }}
+            {% endfor %}
+
+    - name: Apply the migration plan using oc
       shell: |
-        oc apply -f - <<'EOF'
-        apiVersion: forklift.konveyor.io/v1beta1
-        kind: Plan
-        metadata:
-          name: {{ migration_plan_name }}
-          namespace: {{ mtv_namespace }}
-        spec:
-          map:
-            network:
-              name: {{ networkmap_name }}
-              namespace: {{ target_namespace }}
-            storage:
-              name: {{ storagemap_name }}
-              namespace: {{ target_namespace }}
-          provider:
-            destination:
-              name: {{ target_provider }}
-              namespace: {{ target_namespace }}
-            source:
-              name: {{ source_provider }}
-              namespace: {{ target_namespace }}
-          targetNamespace: {{ target_namespace }}
-          vms:
-          {% for vm in vms_to_migrate %}
-            - name: {{ vm }}
-          {% endfor %}
-        'EOF'
+        oc apply -f /tmp/{{ migration_plan_name }}.yaml
+      register: apply_plan_output
+
+    - name: Debug plan creation output
+      debug:
+        var: apply_plan_output.stdout
     - name: Start the migration plan
       shell: |
         oc patch plan {{ migration_plan_name }} -n {{ mtv_namespace }} --type='json' -p='[{"op": "replace", "path": "/spec/targetState", "value": "Started"}]'
