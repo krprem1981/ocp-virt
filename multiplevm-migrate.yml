@@ -84,5 +84,5 @@
         oc get plan {{ migration_plan_name }} -n {{ mtv_namespace }} -o jsonpath="{.status.conditions[?(@.type=='Succeeded')].status}"
       register: migration_status
       until: migration_status.stdout == "True"
-      retries: 10
+      retries: 20
       delay: 30
